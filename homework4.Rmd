@@ -1,0 +1,55 @@
+---
+title: "homework4"
+output: pdf_document
+date: "2023-10-26"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+```{r}
+library(janitor)
+library(sf)
+library(here)
+library(readr)
+library(dplyr)
+```
+
+```{r}
+global_gender_inequality <- read.csv(here::here("homework4","HDR21-22_Composite_indices_complete_time_series.csv"),encoding="latin1")
+```
+
+```{r}
+gender_data <- global_gender_inequality [,c("country","gii_2010","gii_2019")] %>% na.omit()
+```
+
+```{r}
+gender_data <- gender_data %>%
+  mutate(diff = gii_2010 - gii_2019)
+diff_GGI <- gender_data [,c("country","diff")]
+```
+
+```{r}
+# 导入全球城市数据
+world_cities <- sf::st_read("homework4/World_Countries_Generalized/World_Countries_Generalized.shp")%>%
+  clean_names()
+```
+```{r}
+# 将全球性别不平等数据加入城市数据
+cities_GGI <- left_join(world_cities,diff_GGI,by="country") %>%
+  na.omit()
+```
+
+```{r}
+tmap_mode('plot')
+tm_shape(cities_GGI)+
+  tm_polygons('diff',
+              style='quantile',n=4,
+              palette='YlOrRd',
+              title='Gender inequality')+
+  tm_layout(title='Gender inequality between 2010 and 2019',
+            legend.position = c("left", "bottom"))
+```
+
